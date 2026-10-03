@@ -1,0 +1,97 @@
+# Otel logs collector as daemonset
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-collector-logs
+  namespace: observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-collector-logs
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "namespaces", "nodes"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["replicasets", "deployments", "statefulsets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-collector-logs
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-collector-logs
+subjects:
+  - kind: ServiceAccount
+    name: otel-collector-logs
+    namespace: observability
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector-logs
+  namespace: observability
+  labels:
+    app: otel-collector-logs
+spec:
+  selector:
+    matchLabels:
+      app: otel-collector-logs
+  template:
+    metadata:
+      labels:
+        app: otel-collector-logs
+    spec:
+      serviceAccountName: otel-collector-logs
+      securityContext:
+        runAsUser: 0 # root; it needs to read logs from node /var/log/pods/*; can be done rootless
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.161.0
+          args:
+            - --config=/etc/otelcol/config.yaml
+          ports:
+            - name: health
+              containerPort: 13133
+          livenessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol
+              readOnly: true
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: file-storage
+              mountPath: /var/lib/otelcol-logs
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-logs-config
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+            type: Directory
+        - name: file-storage
+          emptyDir: {}

@@ -1,0 +1,68 @@
+receivers:
+  file_log:
+    include:
+      - /var/log/pods/*/*/*.log
+    exclude:
+      - /var/log/pods/observability_otel-collector-logs*/*/*.log
+    start_at: end
+    include_file_path: true
+    include_file_name: false
+    storage: file_storage
+    operators:
+      # CRI/JSON container log parsing
+      - type: container
+        id: container-parser
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  k8s_attributes:
+    auth_type: serviceAccount
+    extract:
+      metadata:
+        - k8s.namespace.name
+        - k8s.pod.name
+        - k8s.pod.uid
+        - k8s.container.name
+        - k8s.node.name
+        - k8s.deployment.name
+    pod_association:
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+      - sources:
+          - from: resource_attribute
+            name: k8s.pod.name
+  resource:
+    attributes:
+      - key: k8s.cluster.name
+        value: devops-cs
+        action: upsert
+  batch: {}
+exporters:
+  otlp_http/victorialogs:
+    logs_endpoint: http://vlsingle-vm.observability.svc.cluster.local:9428/insert/opentelemetry/v1/logs
+    compression: gzip
+    encoding: proto
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+  file_storage:
+    directory: /var/lib/otelcol-logs
+    create_directory: true
+service:
+  extensions:
+    - health_check
+    - file_storage
+  pipelines:
+    logs:
+      receivers:
+        - file_log
+      processors:
+        - memory_limiter
+        - k8s_attributes
+        - resource
+        - batch
+      exporters:
+        - otlp_http/victorialogs

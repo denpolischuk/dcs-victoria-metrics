@@ -4,7 +4,12 @@ namespace: observability
 resources:
   - helmrelease-vmstack.yaml
   - otel-collector.yaml
+  - otel-collector-logs.yaml
 configMapGenerator:
+  # Content-hashed names force a collector rollout when the config changes.
   - name: otel-collector-config
     files:
       - config.yaml=otel-collector-config.yaml
+  - name: otel-collector-logs-config
+    files:
+      - config.yaml=otel-collector-logs-config.yaml
