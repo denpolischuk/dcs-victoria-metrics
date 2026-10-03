@@ -95,6 +95,10 @@ spec:
       enabled: true
     kube-state-metrics:
       enabled: true
+      # drop everything except pods and deployments
+      collectors:
+        - pods
+        - deployments
 
     kubeControllerManager:
       enabled: false
