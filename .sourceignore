@@ -1,0 +1,5 @@
+# Only include directories that Flux should watch
+/*
+!/apps
+!/infrastructure
+!/clusters
