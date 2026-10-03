@@ -14,6 +14,36 @@ receivers:
           static_configs:
             - targets:
                 - backend-api.backend-api.svc.cluster.local:8000
+
+        - job_name: kube-state-metrics
+          scrape_interval: 30s
+          metrics_path: /metrics
+          static_configs:
+            - targets:
+                - vm-kube-state-metrics.observability.svc.cluster.local:8080
+
+        - job_name: node-exporter
+          scrape_interval: 30s
+          metrics_path: /metrics
+          static_configs:
+            - targets:
+                - vm-prometheus-node-exporter.observability.svc.cluster.local:9100
+
+        # cAdvisor metrics to know the resources consumption per container
+        - job_name: kubelet
+          scrape_interval: 30s
+          scheme: https
+          metrics_path: /metrics/cadvisor
+          static_configs:
+            - targets:
+                - k3d-devops-cs-server-0:10250
+          tls_config:
+            insecure_skip_verify: true
+          authorization:
+            credentials_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+          metric_relabel_configs:
+            - action: labeldrop
+              regex: (id|container_id|image_id)
 processors:
   memory_limiter:
     check_interval: 1s

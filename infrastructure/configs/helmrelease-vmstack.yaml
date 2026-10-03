@@ -91,10 +91,18 @@ spec:
         limits:
           memory: 1Gi
 
-    # Disable node exporter, kube metrics, default dashboards + rules as they are out of scope
     prometheus-node-exporter:
-      enabled: false
+      enabled: true
     kube-state-metrics:
+      enabled: true
+
+    kubeControllerManager:
+      enabled: false
+    kubeScheduler:
+      enabled: false
+    kubeEtcd:
+      enabled: false
+    kubeProxy:
       enabled: false
     defaultDashboards:
       enabled: false
