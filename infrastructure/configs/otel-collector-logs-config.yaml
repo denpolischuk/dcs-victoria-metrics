@@ -3,8 +3,8 @@ receivers:
     include:
       - /var/log/pods/*/*/*.log
     exclude:
-      - /var/log/pods/observability_otel-collector-logs*/*/*.log
-    start_at: end
+      - /var/log/pods/observability_otel-collector-logs*/*/*.log # Exclude self logs of the log collector
+    start_at: end # read from the tail of the log file; to not duplicate the logs during restart and 
     include_file_path: true
     include_file_name: false
     storage: file_storage
@@ -35,10 +35,10 @@ processors:
     pod_association:
       - sources:
           - from: resource_attribute
-            name: k8s.pod.uid
+            name: k8s.pod.uid # use pod UID as name OR
       - sources:
           - from: resource_attribute
-            name: k8s.pod.name
+            name: k8s.pod.name # use pod name as name
   resource:
     attributes:
       - key: k8s.cluster.name
