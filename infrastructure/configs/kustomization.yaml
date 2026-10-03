@@ -5,6 +5,8 @@ resources:
   - helmrelease-vmstack.yaml
   - otel-collector.yaml
   - otel-collector-logs.yaml
+  - dashboard-ml-api.yaml
+  - dashboard-backend-api.yaml
 configMapGenerator:
   # Content-hashed names force a collector rollout when the config changes.
   - name: otel-collector-config

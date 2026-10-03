@@ -79,6 +79,9 @@ spec:
     grafana:
       enabled: true
       adminPassword: admin # will do for assignment purposes; otherwise should use secrets
+      grafana.ini:
+        grafana-apiserver:
+          preferred_api_version: dashboard.grafana.app/v1 # To be able to export V1 dashboard specs from the grafana API; compatible with the sidecar
       plugins:
         - victoriametrics-logs-datasource
       resources:
