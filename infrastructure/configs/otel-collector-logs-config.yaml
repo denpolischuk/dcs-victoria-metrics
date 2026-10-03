@@ -17,6 +17,11 @@ processors:
     check_interval: 1s
     limit_percentage: 80
     spike_limit_percentage: 25
+  filter/health:
+    error_mode: ignore
+    logs:
+      log_record:
+        - 'IsMatch(body, "GET /(health|ready) HTTP[^\"]*\" 2[0-9][0-9]")'
   k8s_attributes:
     auth_type: serviceAccount
     extract:
@@ -61,6 +66,7 @@ service:
         - file_log
       processors:
         - memory_limiter
+        - filter/health
         - k8s_attributes
         - resource
         - batch
