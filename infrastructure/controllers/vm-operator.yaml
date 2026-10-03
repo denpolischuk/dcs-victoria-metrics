@@ -1,0 +1,29 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: victoria-metrics-operator
+  namespace: observability
+spec:
+  interval: 1h
+  chart:
+    spec:
+      chart: victoria-metrics-operator # https://artifacthub.io/packages/helm/victoriametrics/victoria-metrics-operator
+      version: "0.68.1"
+      sourceRef:
+        kind: HelmRepository
+        name: victoriametrics
+        namespace: observability
+      interval: 1h
+  install:
+    crds: CreateReplace
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 5m
+  upgrade:
+    crds: CreateReplace
+    strategy:
+      name: RetryOnFailure
+      retryInterval: 5m
+  values:
+    admissionWebhooks:
+      policy: Ignore
