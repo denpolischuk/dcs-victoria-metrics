@@ -1,0 +1,3 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+prometheus_client==0.21.1
