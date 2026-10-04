@@ -1,0 +1,104 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: apps-availability
+  namespace: observability
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: apps.availability
+      rules:
+        - alert: AppTargetDown
+          expr: up{job=~"ml-api|backend-api"} == 0
+          for: 2m
+          keep_firing_for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "{{ $labels.job }} scrape target is down"
+            description: "The metrics collector has failed to scrape {{ $labels.job }} ({{ $labels.instance }}) for 2 minutes."
+            runbook_url: "https://runbooks.prometheus-operator.dev/runbooks/general/targetdown"
+        - alert: PodNotReady
+          expr: kube_pod_status_ready{namespace=~"ml-api|backend-api|postgres", condition="true"} == 0
+          for: 5m
+          keep_firing_for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} is not ready"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has been NotReady for 5 minutes."
+        - alert: DeploymentReplicasMismatch
+          expr: |-
+            kube_deployment_status_replicas_available{namespace=~"ml-api|backend-api|postgres"}
+              < kube_deployment_spec_replicas{namespace=~"ml-api|backend-api|postgres"}
+          for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Deployment {{ $labels.deployment }} has fewer replicas available than desired"
+            description: "{{ $labels.namespace }}/{{ $labels.deployment }} has had fewer available than desired replicas for 10 minutes."
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: apps-workload
+  namespace: observability
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: apps.workload
+      rules:
+        - alert: PodCrashLooping
+          expr: |-
+            max by (namespace, pod, container) (
+              kube_pod_container_status_waiting_reason{namespace=~"ml-api|backend-api|postgres", reason="CrashLoopBackOff"}
+            ) > 0
+          for: 5m
+          keep_firing_for: 10m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash-looping"
+            description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} has been in CrashLoopBackOff for 5 minutes."
+        - alert: PodRestartingFrequently
+          expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace=~"ml-api|backend-api|postgres"}[1h])) > 5
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} is restarting frequently"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted more than 5 times in the last hour. This might an application misbehaviour."
+        - alert: ContainerOOMKilled
+          expr: sum by (namespace, pod, container) (increase(container_oom_events_total{namespace=~"ml-api|backend-api|postgres", container!=""}[10m])) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Container {{ $labels.container }} was OOM-killed"
+            description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} was OOM-killed in the last 10 minutes."
+        - alert: ContainerMemoryNearLimit
+          expr: |-
+            max by (namespace, pod, container) (
+              container_memory_working_set_bytes{namespace=~"ml-api|backend-api|postgres", container!=""}
+                / (container_spec_memory_limit_bytes{namespace=~"ml-api|backend-api|postgres", container!=""} > 0)
+            ) > 0.9
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Container {{ $labels.container }} is near its memory limit"
+            description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} is using over 90% of its memory limit."
+        - alert: ContainerCPUThrottling
+          expr: |-
+            max by (namespace, pod, container) (
+              rate(container_cpu_cfs_throttled_periods_total{namespace=~"ml-api|backend-api|postgres", container!=""}[5m])
+                / rate(container_cpu_cfs_periods_total{namespace=~"ml-api|backend-api|postgres", container!=""}[5m])
+            ) > 0.25
+          for: 15m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Container {{ $labels.container }} is being CPU-throttled"
+            description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} is throttled for over 25% of periods."

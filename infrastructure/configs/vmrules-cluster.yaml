@@ -1,0 +1,72 @@
+# Cluster-level alerting
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: cluster-nodes
+  namespace: observability
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: cluster.nodes
+      rules:
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready", status="true"} == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Node {{ $labels.node }} is NotReady"
+            description: "Node {{ $labels.node }} has been NotReady for 5 minutes."
+            runbook_url: "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubenodenotready"
+        - alert: NodeMemoryPressure
+          expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) < 0.10
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.instance }} is low on memory"
+            description: "Less than 10% of memory is available on {{ $labels.instance }} for 10 minutes."
+        - alert: NodeDiskPressure
+          expr: |-
+            max by (instance, device, mountpoint) (
+              node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}
+                / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"}
+            ) < 0.10
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Node {{ $labels.instance }} is low on disk ({{ $labels.mountpoint }})"
+            description: "Less than 10% of disk space is free on {{ $labels.mountpoint }} for 10 minutes."
+            runbook_url: "https://runbooks.prometheus-operator.dev/runbooks/node/nodefilesystemspacefillingup"
+---
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: cluster-scrape
+  namespace: observability
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: cluster.scrape
+      rules:
+        - alert: KubeletDown
+          expr: up{job="kubelet"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Kubelet scrape target is down"
+            description: "The kubelet on {{ $labels.instance }} has been unscrapeable for 5 minutes."
+            runbook_url: "https://runbooks.prometheus-operator.dev/runbooks/kubernetes/kubeletdown"
+        - alert: ClusterExporterDown
+          expr: up{job=~"kube-state-metrics|node-exporter"} == 0
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "{{ $labels.job }} scrape target is down"
+            description: "{{ $labels.job }} ({{ $labels.instance }}) has been unscrapeable for 5 minutes."
+            runbook_url: "https://runbooks.prometheus-operator.dev/runbooks/general/targetdown"

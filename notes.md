@@ -21,6 +21,7 @@
 - Secrets of course :) 
 - Root Otel DaemonSet: it runs runAsUser: 0 because kubelet writes /var/log/pods as root. I would look into a hardened options
 - Proper Auth and RBAC for Grafana, VMUI, etc.
+- Network policies
 
 ## Performance & Availability
 
@@ -28,6 +29,7 @@
 - Proper storage backend - persistent volumes + Blob storage or ElasticSearch for instance.
 - Setup minimization.
 - Fine-tune the logs scrape filters to reduce noise and volume.
+- There's no self-scrape and no self-monitoring of the observability stack itself. It would make sense to have it in a production environment.
 
 ## QoL & Experience
 

@@ -72,9 +72,35 @@ spec:
             memory: 512Mi
 
     vmalert:
-      enabled: false
+      enabled: true
     alertmanager:
-      enabled: false
+      enabled: true
+      config:
+        route:
+          receiver: blackhole
+          group_by:
+            - alertname
+            - namespace
+          group_wait: 30s
+          group_interval: 5m
+          repeat_interval: 4h
+          routes:
+            - matchers:
+                - severity="critical"
+              receiver: blackhole
+            - matchers:
+                - severity="warning"
+              receiver: blackhole
+        receivers:
+          - name: blackhole # - nothing will ring; otherwise would need to use something like PagerDuty or at least a webhook
+        # supress warning notifications if an app is down
+        inhibit_rules:
+          - source_matchers:
+              - alertname="AppTargetDown"
+            target_matchers:
+              - severity="warning"
+            equal:
+              - job
 
     grafana:
       enabled: true
@@ -95,10 +121,11 @@ spec:
       enabled: true
     kube-state-metrics:
       enabled: true
-      # drop everything except pods and deployments
+      # drop everything except pods, deployments and nodes
       collectors:
         - pods
         - deployments
+        - nodes
 
     kubeControllerManager:
       enabled: false

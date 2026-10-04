@@ -1,0 +1,40 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: ml-api-service
+  namespace: ml-api
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: ml-api.service
+      rules:
+        - alert: MLAPIHighErrorRate
+          expr: |-
+            (sum(rate(ml_api_requests_total{status=~"5.."}[5m])) or vector(0))
+              / sum(rate(ml_api_requests_total[5m])) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "ml-api 5xx error ratio above 5%"
+            description: "ml-api has been returning 5xx for more than 5% of requests over the last 5 minutes."
+            runbook_url: "<let's imagine a runbook link here>"
+        - alert: MLAPIHighLatencyP95
+          expr: histogram_quantile(0.95, sum by (le) (rate(ml_api_request_duration_seconds_bucket[5m]))) > 5
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ml-api p95 latency above 5s" # Not sure whether 5s is a meaninful threshold, depends on the model purpose and inference complexity 
+            description: "ml-api p95 request duration has exceeded 5s for 10 minutes."
+            runbook_url: "<let's imagine a runbook link here>"
+        - alert: MLAPINoPredictions
+          expr: sum(rate(ml_api_requests_total{endpoint="/predict"}[10m])) > 0 and sum(rate(ml_api_predictions_total[10m])) == 0
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "ml-api receives /predict requests but records no predictions"
+            description: "/predict is being called but ml_api_predictions_total is not increasing."
+            runbook_url: "<let's imagine a runbook link here>"

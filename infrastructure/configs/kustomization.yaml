@@ -7,6 +7,8 @@ resources:
   - otel-collector-logs.yaml
   - dashboard-ml-api.yaml
   - dashboard-backend-api.yaml
+  - vmrules-apps.yaml
+  - vmrules-cluster.yaml
 configMapGenerator:
   # Content-hashed names force a collector rollout when the config changes.
   - name: otel-collector-config

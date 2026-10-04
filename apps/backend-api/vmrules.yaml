@@ -1,0 +1,40 @@
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMRule
+metadata:
+  name: backend-api-service
+  namespace: backend-api
+  labels:
+    role: alert-rules
+spec:
+  groups:
+    - name: backend-api.service
+      rules:
+        - alert: BackendAPIHighErrorRate
+          expr: |-
+            (sum(rate(backend_api_requests_total{status=~"5.."}[5m])) or vector(0))
+              / clamp_min(sum(rate(backend_api_requests_total[5m])), 0.001) > 0.05
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "backend-api 5xx error ratio above 5%"
+            description: "backend-api has been returning 5xx for more than 5% of requests over the last 5 minutes."
+            runbook_url: "<let's imagine a runbook link here>"
+        - alert: BackendAPIHighLatencyP95
+          expr: histogram_quantile(0.95, sum by (le) (rate(backend_api_request_duration_seconds_bucket[5m]))) > 1
+          for: 10m
+          labels:
+            severity: warning
+          annotations:
+            summary: "backend-api p95 latency above 1s"
+            description: "backend-api p95 request duration has exceeded 1s for 10 minutes."
+            runbook_url: "<let's imagine a runbook link here>"
+        - alert: BackendDBQueryErrors
+          expr: sum(rate(backend_api_db_queries_total{status!="success"}[5m])) > 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "backend-api is getting database query errors"
+            description: "backend-api has recorded non-success database queries over the last 5 minutes"
+            runbook_url: "<let's imagine a runbook link here>"
