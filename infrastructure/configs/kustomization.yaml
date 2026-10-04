@@ -3,17 +3,7 @@ kind: Kustomization
 namespace: observability
 resources:
   - helmrelease-vmstack.yaml
-  - otel-collector.yaml
-  - otel-collector-logs.yaml
   - dashboard-ml-api.yaml
   - dashboard-backend-api.yaml
   - vmrules-apps.yaml
   - vmrules-cluster.yaml
-configMapGenerator:
-  # Content-hashed names force a collector rollout when the config changes.
-  - name: otel-collector-config
-    files:
-      - config.yaml=otel-collector-config.yaml
-  - name: otel-collector-logs-config
-    files:
-      - config.yaml=otel-collector-logs-config.yaml

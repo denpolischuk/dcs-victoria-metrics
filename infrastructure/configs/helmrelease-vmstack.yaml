@@ -31,9 +31,9 @@ spec:
     victoria-metrics-operator: 
       enabled: false
       
-    # using OTel collector instead
-    vmagent: 
-      enabled: false 
+    # VM metrics agent scrapes application + cluster targets via VMServiceScrape/VMNodeScrape
+    vmagent:
+      enabled: true
   
     # use single node installation
     vmsingle: 
@@ -70,6 +70,10 @@ spec:
             memory: 128Mi
           limits:
             memory: 512Mi
+
+    # VictoriaLogs collector
+    vlagent:
+      enabled: true
 
     vmalert:
       enabled: true
@@ -134,6 +138,10 @@ spec:
     kubeEtcd:
       enabled: false
     kubeProxy:
+      enabled: false
+    kubeApiServer:
+      enabled: false
+    coreDns:
       enabled: false
     defaultDashboards:
       enabled: false

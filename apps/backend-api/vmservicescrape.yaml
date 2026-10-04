@@ -1,0 +1,19 @@
+# VMs ServiceMonitor
+apiVersion: operator.victoriametrics.com/v1beta1
+kind: VMServiceScrape
+metadata:
+  name: backend-api
+  namespace: backend-api
+spec:
+  jobLabel: app
+  namespaceSelector:
+    matchNames:
+      - backend-api
+  selector:
+    matchLabels:
+      app: backend-api
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      honorLabels: true
