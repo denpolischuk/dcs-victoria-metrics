@@ -552,7 +552,7 @@ data:
             "showControls": false,
             "showFieldSelector": false,
             "showLevel": true,
-            "showTime": false,
+            "showTime": true,
             "sortOrder": "Descending",
             "timestampResolution": "ms",
             "unwrappedColumns": false,
