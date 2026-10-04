@@ -1112,6 +1112,52 @@ data:
           ],
           "title": "Postgres availability & pod readiness",
           "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "victoriametrics-logs-datasource",
+            "uid": "VictoriaLogs"
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 57
+          },
+          "id": 15,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": false,
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showControls": false,
+            "showFieldSelector": false,
+            "showLevel": true,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "timestampResolution": "ms",
+            "unwrappedColumns": false,
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "13.2.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "victoriametrics-logs-datasource",
+                "uid": "VictoriaLogs"
+              },
+              "direction": "desc",
+              "editorMode": "code",
+              "expr": "{k8s.deployment.name in(\"backend-api\")}",
+              "legendFormat": "",
+              "maxLines": 250,
+              "packJson": false,
+              "queryType": "instant",
+              "refId": "A"
+            }
+          ],
+          "title": "Application logs",
+          "type": "logs"
         }
       ],
       "preload": false,
