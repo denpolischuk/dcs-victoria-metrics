@@ -49,8 +49,8 @@ installations instead of running the operator.
 ## Performance & availability
 
 - Would use cluster mode instead of single-node for metrics and logs.
-- Proper storage backend - persistent volumes + blob storage (or Elasticsearch
-  for logs) instead of a small local-path PVC.
+- Proper storage backend - persistent volumes + blob storage for backups instead
+  of a small local-path PVC.
 - Fine-tune log filters - reduce noise and volume further than just healthcheck
   probes on the ingestion level.
   Usually it's often a good idea to add PII data filters such as IBANs, emails,
