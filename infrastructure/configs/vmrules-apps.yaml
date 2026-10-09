@@ -71,13 +71,16 @@ spec:
             summary: "Pod {{ $labels.pod }} is restarting frequently"
             description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted more than 5 times in the last hour. This might an application misbehaviour."
         - alert: ContainerOOMKilled
-          expr: sum by (namespace, pod, container) (increase(container_oom_events_total{namespace=~"ml-api|backend-api|postgres", container!=""}[10m])) > 0
+          expr: |-
+            max by (namespace, pod, container) (
+              kube_pod_container_status_last_terminated_reason{namespace=~"ml-api|backend-api|postgres", reason="OOMKilled"}
+            ) > 0
           for: 1m
           labels:
             severity: warning
           annotations:
             summary: "Container {{ $labels.container }} was OOM-killed"
-            description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} was OOM-killed in the last 10 minutes."
+            description: "Container {{ $labels.container }} in {{ $labels.namespace }}/{{ $labels.pod }} was OOM-killed (last termination reason)."
         - alert: ContainerMemoryNearLimit
           expr: |-
             max by (namespace, pod, container) (

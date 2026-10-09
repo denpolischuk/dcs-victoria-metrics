@@ -37,7 +37,8 @@ kube api or app iteself, hence the following setup:
   This is the "memory vs requests/limits" view.
 - CPU throttling ratio (`container_cpu_cfs_throttled_periods_total` /
   `_periods_total`) - a pod can be alive but starved.
-- `container_oom_events_total` - direct evidence of memory pressure.
+- OOM kills:
+  `kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}`.
 
 ### Node layer
 - `node_memory_MemAvailable_bytes`/`MemTotal_bytes` and
@@ -150,7 +151,7 @@ All rules are `VMRule` CRs, evaluated by vmalert with a 20s interval.
 | | `DeploymentReplicasMismatch` | critical | 10m | available < desired replicas |
 | `apps.workload` | `PodCrashLooping` | critical | 5m | CrashLoopBackOff |
 | | `PodRestartingFrequently` | warning | 5m | > 5 restarts/hour |
-| | `ContainerOOMKilled` | warning | 1m | OOM kill in last 10m |
+| | `ContainerOOMKilled` | warning | 1m | last termination reason = `OOMKilled` (KSM) |
 | | `ContainerMemoryNearLimit` | warning | 10m | working set > 90% of limit |
 | | `ContainerCPUThrottling` | warning | 15m | > 25% throttled periods |
 | `cluster.nodes` | `NodeNotReady` | critical | 5m | node NotReady |
